@@ -1,17 +1,21 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { Home, Calendar, FileText, HelpCircle, User } from 'lucide-react';
-import { usePathname } from 'next/navigation';
-import LogoutButton from './logout-button';
+import Link from "next/link";
+import { Home, Calendar, FileText, HelpCircle, User } from "lucide-react";
+import { usePathname } from "next/navigation";
+import LogoutButton from "./logout-button";
+
+type Props = {
+  onOpenUploadModal: () => void;
+};
 
 const menu = [
-  { label: 'Homepage', href: '/dashboard', icon: Home },
-  { label: 'Calendar', href: '/calendar', icon: Calendar },
-  { label: 'Questions', href: '/questions', icon: FileText },
+  { label: "Homepage", href: "/dashboard", icon: Home },
+  { label: "Calendar", href: "/calendar", icon: Calendar },
+  { label: "Questions", href: "/questions", icon: FileText },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ onOpenUploadModal }: Props) {
   const pathname = usePathname();
 
   return (
@@ -28,9 +32,30 @@ export default function Sidebar() {
       {/* Main menu */}
       <nav className="space-y-1">
         {menu.map((item) => {
-          const active = pathname === item.href;
           const Icon = item.icon;
+          const active = pathname === item.href;
 
+          // 👉 KHUSUS Homepage
+          if (item.label === "Homepage") {
+            return (
+              <button
+                key={item.label}
+                onClick={onOpenUploadModal}
+                className={`flex w-full items-center gap-3 px-3 py-2 rounded-lg transition
+                  ${
+                    active
+                      ? "bg-indigo-500 text-white"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }
+                `}
+              >
+                <Icon size={18} />
+                {item.label}
+              </button>
+            );
+          }
+
+          // 👉 Menu normal
           return (
             <Link
               key={item.href}
@@ -38,8 +63,8 @@ export default function Sidebar() {
               className={`flex items-center gap-3 px-3 py-2 rounded-lg transition
                 ${
                   active
-                    ? 'bg-indigo-500 text-white'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? "bg-indigo-500 text-white"
+                    : "text-gray-700 hover:bg-gray-100"
                 }
               `}
             >
@@ -62,7 +87,8 @@ export default function Sidebar() {
         <SidebarItem icon={<HelpCircle size={18} />} label="Help" />
         <SidebarItem icon={<User size={18} />} label="Account" />
       </div>
-      <div className="mt-auto">
+
+      <div className="mt-4">
         <LogoutButton />
       </div>
     </aside>

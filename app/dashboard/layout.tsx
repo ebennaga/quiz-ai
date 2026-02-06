@@ -1,7 +1,7 @@
-import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
-import { createServerClient } from '@supabase/ssr';
-import Sidebar from '@/components/ui/sidebar';
+import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
+import DashboardShell from "./dashboard-shell";
 
 export default async function DashboardLayout({
   children,
@@ -24,12 +24,7 @@ export default async function DashboardLayout({
 
   const { data } = await supabase.auth.getUser();
 
-  if (!data.user) redirect('/auth');
+  if (!data.user) redirect("/auth");
 
-  return (
-    <div className="flex">
-      <Sidebar />
-      <main className="flex-1 p-6">{children}</main>
-    </div>
-  );
+  return <DashboardShell>{children}</DashboardShell>;
 }
