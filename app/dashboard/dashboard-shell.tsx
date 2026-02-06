@@ -20,8 +20,8 @@ export default function DashboardShell({
       <UploadQuizModal
         open={openUpload}
         onClose={() => setOpenUpload(false)}
-        onUpload={() => {
-          console.log("upload clicked");
+        onUpload={(file) => {
+          console.log("File siap diupload:", file);
           setOpenUpload(false);
         }}
       />
