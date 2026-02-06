@@ -1,13 +1,13 @@
-import GoogleLoginButton from "@/components/auth/google-login-button";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { supabase } from "@/lib/supabase/client";
-import { Sparkles, Brain, BarChart3 } from "lucide-react";
+import GoogleLoginButton from '@/components/auth/google-login-button';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { supabase } from '@/lib/supabase/client';
+import { Sparkles, Brain, BarChart3 } from 'lucide-react';
 
 export default function Home() {
   const signInWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({
-      provider: "google",
+      provider: 'google',
       options: {
         redirectTo: `${location.origin}/auth/callback`,
       },
