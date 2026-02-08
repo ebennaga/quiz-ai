@@ -9,6 +9,8 @@ type Props = {
   onClose: () => void;
   onUpload: (file: File) => void;
   loading?: boolean;
+  onContinue: () => void;
+  uploadDone?: boolean;
 };
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -26,6 +28,8 @@ export default function UploadQuizModal({
   onClose,
   onUpload,
   loading = false,
+  onContinue,
+  uploadDone = false,
 }: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -119,6 +123,19 @@ export default function UploadQuizModal({
             ) : (
               "Upload"
             )}
+          </Button>
+
+          {/* Continue Button */}
+          <Button
+            onClick={onContinue}
+            disabled={!uploadDone || loading}
+            className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-50"
+          >
+            {loading
+              ? "Memproses..."
+              : uploadDone
+                ? "Continue"
+                : "Generate Kuis"}
           </Button>
 
           {/* File name */}
