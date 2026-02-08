@@ -2,12 +2,13 @@
 
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Upload } from "lucide-react";
+import { Upload, Loader2 } from "lucide-react";
 
 type Props = {
   open: boolean;
   onClose: () => void;
   onUpload: (file: File) => void;
+  loading?: boolean;
 };
 
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -20,7 +21,12 @@ const ALLOWED_TYPES = [
   "text/plain",
 ];
 
-export default function UploadQuizModal({ open, onClose, onUpload }: Props) {
+export default function UploadQuizModal({
+  open,
+  onClose,
+  onUpload,
+  loading = false,
+}: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
@@ -50,12 +56,20 @@ export default function UploadQuizModal({ open, onClose, onUpload }: Props) {
     onUpload(file);
   };
 
+  const handleClose = () => {
+    if (!loading) {
+      setError(null);
+      setFileName(null);
+      onClose();
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/30 backdrop-blur-sm"
-        onClick={onClose}
+        onClick={handleClose}
       />
 
       {/* Modal */}
@@ -63,12 +77,18 @@ export default function UploadQuizModal({ open, onClose, onUpload }: Props) {
         <div className="flex flex-col items-center text-center space-y-4">
           {/* Icon */}
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-100 text-orange-500">
-            <Upload className="h-6 w-6" />
+            {loading ? (
+              <Loader2 className="h-6 w-6 animate-spin" />
+            ) : (
+              <Upload className="h-6 w-6" />
+            )}
           </div>
 
           {/* Text */}
           <h2 className="text-base font-semibold sm:text-lg">
-            Unggah file untuk menghasilkan soal
+            {loading
+              ? "Memproses file..."
+              : "Unggah file untuk menghasilkan soal"}
           </h2>
 
           <p className="text-xs text-gray-500">
@@ -82,20 +102,36 @@ export default function UploadQuizModal({ open, onClose, onUpload }: Props) {
             accept=".pdf,.ppt,.pptx,.doc,.docx,.txt"
             className="hidden"
             onChange={handleFileChange}
+            disabled={loading}
           />
 
           {/* Button */}
           <Button
             onClick={() => inputRef.current?.click()}
             className="bg-orange-500 hover:bg-orange-600"
+            disabled={loading}
           >
-            Upload
+            {loading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Memproses...
+              </>
+            ) : (
+              "Upload"
+            )}
           </Button>
 
           {/* File name */}
-          {fileName && (
+          {fileName && !loading && (
             <p className="text-sm text-green-600 truncate max-w-full">
-              {fileName}
+              ✓ {fileName}
+            </p>
+          )}
+
+          {/* Loading status */}
+          {loading && fileName && (
+            <p className="text-sm text-blue-600 truncate max-w-full">
+              Mengekstrak teks dari {fileName}...
             </p>
           )}
 
