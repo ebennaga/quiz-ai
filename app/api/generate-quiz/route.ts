@@ -1,58 +1,56 @@
-import OpenAI from "openai";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { NextResponse } from 'next/server';
+import OpenAI from 'openai';
+import { createSupabaseServerClient } from '@/lib/supabase/server';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY!,
-});
+const openai = new OpenAI();
 
 export async function POST(req: Request) {
-  const { prompt } = await req.json();
-
-  // 1️⃣ Embedding pertanyaan
-  const embeddingRes = await openai.embeddings.create({
-    model: "text-embedding-3-small",
-    input: prompt,
-  });
-
-  const embedding = embeddingRes.data[0].embedding;
-
+  const { documentId } = await req.json();
   const supabase = await createSupabaseServerClient();
 
-  // 2️⃣ Ambil konteks dari Supabase
-  const { data, error } = await supabase.rpc("match_pdf_chunks", {
-    query_embedding: embedding,
-    match_threshold: 0.7,
-    match_count: 10,
+  // 1️⃣ Ambil context via similarity search
+  const embedding = await openai.embeddings.create({
+    model: 'text-embedding-3-small',
+    input: 'materi utama',
   });
 
-  if (error) throw error;
+  const { data: chunks } = await supabase.rpc('match_pdf_chunks', {
+    query_embedding: embedding.data[0].embedding,
+    match_count: 5,
+    doc_id: documentId,
+  });
 
-  const context = data.map((d: any) => d.content).join("\n");
+  const context = chunks.map((c: any) => c.content).join('\n');
 
-  // 3️⃣ Generate soal
+  // 2️⃣ Generate quiz
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: 'gpt-4o-mini',
     messages: [
       {
-        role: "system",
-        content: "Kamu adalah AI pembuat soal edukasi.",
-      },
-      {
-        role: "user",
+        role: 'user',
         content: `
-Gunakan konteks berikut untuk membuat soal.
-
+Buat soal pilihan ganda dan essay dari materi berikut:
 ${context}
 
-Buat:
-- 5 soal pilihan ganda
-- 2 soal essay
-`,
+Output JSON.
+        `,
       },
     ],
   });
 
-  return Response.json({
-    quiz: completion.choices[0].message.content,
+  const quizJson = JSON.parse(completion.choices[0].message.content!);
+
+  // 3️⃣ Simpan quiz
+  const { data: quiz } = await supabase
+    .from('quizzes')
+    .insert({
+      document_id: documentId,
+      content: quizJson,
+    })
+    .select()
+    .single();
+
+  return NextResponse.json({
+    quizId: quiz.id,
   });
 }

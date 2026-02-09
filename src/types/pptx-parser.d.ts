@@ -1,4 +1,4 @@
-declare module "pptx-parser" {
+declare module 'pptx-parser' {
   const parser: {
     parse: (buffer: Buffer) => Promise<
       Array<{
@@ -9,4 +9,8 @@ declare module "pptx-parser" {
   };
 
   export default parser;
+
+  export function parse(arg0: Buffer<ArrayBuffer>) {
+    throw new Error('Function not implemented.');
+  }
 }
