@@ -6,54 +6,71 @@ const openai = new OpenAI({
 });
 
 const supabase = createClient(
-  process.env.SUPABASE_URL!,
-  process.env.SUPABASE_ANON_KEY!,
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
 );
 
 export async function POST(req: Request) {
-  const { topic } = await req.json();
+  try {
+    const { documentId, mcq, essay } = await req.json();
 
-  // 1. embedding query
-  const queryEmbedding = await openai.embeddings.create({
-    model: "text-embedding-3-small",
-    input: topic,
-  });
+    if (!documentId) {
+      return Response.json(
+        { error: "documentId is required" },
+        { status: 400 },
+      );
+    }
 
-  // 2. ambil konteks relevan
-  const { data } = await supabase.rpc("match_pdf_chunks", {
-    query_embedding: queryEmbedding.data[0].embedding,
-    match_count: 10,
-  });
+    // 1️⃣ Ambil semua chunk dari document itu
+    const { data, error } = await supabase
+      .from("pdf_chunks")
+      .select("content")
+      .eq("document_id", documentId);
+    console.log("data2", data);
+    if (error) {
+      return Response.json({ error: error.message }, { status: 500 });
+    }
 
-  const context = data.map((d: any) => d.content).join("\n");
+    if (!data || data.length === 0) {
+      return Response.json(
+        { error: "No content found for this document" },
+        { status: 404 },
+      );
+    }
 
-  // 3. generate soal
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages: [
-      {
-        role: "system",
-        content: "Kamu adalah guru profesional.",
-      },
-      {
-        role: "user",
-        content: `
+    const context = data.map((d: any) => d.content).join("\n");
+    console.log("context", context);
+    // 2️⃣ Generate quiz
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "Kamu adalah guru profesional.",
+        },
+        {
+          role: "user",
+          content: `
 Berdasarkan materi berikut:
 ${context}
 
 Buatkan:
-- 14 soal pilihan ganda (A–D)
-- 6 soal esai
+- ${mcq ?? 14} soal pilihan ganda (A–D)
+- ${essay ?? 6} soal esai
 
 Untuk setiap soal:
 - Sertakan jawaban benar
 - Untuk esai sertakan poin penilaian singkat
 `,
-      },
-    ],
-  });
+        },
+      ],
+    });
 
-  return Response.json({
-    quiz: completion.choices[0].message.content,
-  });
+    return Response.json({
+      quiz: completion.choices[0].message.content,
+    });
+  } catch (err: any) {
+    console.error("SERVER ERROR:", err);
+    return Response.json({ error: err.message }, { status: 500 });
+  }
 }
