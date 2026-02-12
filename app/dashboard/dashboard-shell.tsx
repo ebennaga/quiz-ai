@@ -4,6 +4,8 @@ import { useState } from "react";
 import Sidebar from "@/components/ui/sidebar";
 import UploadQuizModal from "@/components/ui/upload-kuis-modal";
 
+import { useRouter } from "next/navigation";
+
 export default function DashboardShell({
   children,
 }: {
@@ -16,6 +18,7 @@ export default function DashboardShell({
   const [uploadDone, setUploadDone] = useState(false);
   const [generating, setGenerating] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const router = useRouter();
 
   const handleUpload = async (file: File) => {
     try {
@@ -100,7 +103,7 @@ export default function DashboardShell({
       setOpenUpload(false);
 
       // optional redirect
-      // router.push(`/quiz/${data.quizId}`);
+      router.push(`/quiz/${data.quizId}`);
     } catch (err: any) {
       alert(err.message);
     }
