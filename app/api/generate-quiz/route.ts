@@ -1,6 +1,6 @@
-import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
+import { NextResponse } from "next/server";
+import OpenAI from "openai";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const openai = new OpenAI();
 
@@ -10,24 +10,24 @@ export async function POST(req: Request) {
 
   // 1️⃣ Ambil context via similarity search
   const embedding = await openai.embeddings.create({
-    model: 'text-embedding-3-small',
-    input: 'materi utama',
+    model: "text-embedding-3-small",
+    input: "materi utama",
   });
 
-  const { data: chunks } = await supabase.rpc('match_pdf_chunks', {
+  const { data: chunks } = await supabase.rpc("match_pdf_chunks", {
     query_embedding: embedding.data[0].embedding,
     match_count: 5,
     doc_id: documentId,
   });
 
-  const context = chunks.map((c: any) => c.content).join('\n');
+  const context = chunks.map((c: any) => c.content).join("\n");
 
   // 2️⃣ Generate quiz
   const completion = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: "gpt-4o-mini",
     messages: [
       {
-        role: 'user',
+        role: "user",
         content: `
 Buat soal pilihan ganda dan essay dari materi berikut:
 ${context}
@@ -42,7 +42,7 @@ Output JSON.
 
   // 3️⃣ Simpan quiz
   const { data: quiz } = await supabase
-    .from('quizzes')
+    .from("quizzes")
     .insert({
       document_id: documentId,
       content: quizJson,

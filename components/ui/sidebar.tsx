@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Home, Calendar, FileText, HelpCircle, User } from "lucide-react";
 import { usePathname } from "next/navigation";
 import LogoutButton from "./logout-button";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase/client";
 
 type Props = {
   onOpenUploadModal: () => void;
@@ -17,7 +19,22 @@ const menu = [
 
 export default function Sidebar({ onOpenUploadModal }: Props) {
   const pathname = usePathname();
+  const [hasDocument, setHasDocument] = useState<boolean | null>(null);
+  useEffect(() => {
+    const checkDocument = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
+      if (!user) return;
+      const res = await fetch(`/api/quiz/check-upload?userId=${user.id}`);
+      const data = await res.json();
+
+      setHasDocument(data.hasDocument);
+    };
+
+    checkDocument();
+  }, []);
   return (
     <aside className="w-64 h-screen border-r bg-white flex flex-col px-4 py-6">
       {/* Logo */}
@@ -37,17 +54,25 @@ export default function Sidebar({ onOpenUploadModal }: Props) {
 
           // 👉 KHUSUS Homepage
           if (item.label === "Homepage") {
+            const handleClick = () => {
+              if (hasDocument) {
+                window.location.href = "/dashboard";
+              } else {
+                onOpenUploadModal();
+              }
+            };
+
             return (
               <button
                 key={item.label}
-                onClick={onOpenUploadModal}
+                onClick={handleClick}
                 className={`flex w-full items-center gap-3 px-3 py-2 rounded-lg transition
-                  ${
-                    active
-                      ? "bg-indigo-500 text-white"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }
-                `}
+        ${
+          pathname === item.href
+            ? "bg-indigo-500 text-white"
+            : "text-gray-700 hover:bg-gray-100"
+        }
+      `}
               >
                 <Icon size={18} />
                 {item.label}

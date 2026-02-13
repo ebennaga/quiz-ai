@@ -20,6 +20,7 @@ export default function QuizPage() {
   const [selectedAnswers, setSelectedAnswers] = useState<{
     [key: string]: string;
   }>({});
+  const normalize = (text?: string) => text?.trim().toLowerCase();
 
   useEffect(() => {
     fetchQuestions();
@@ -52,7 +53,7 @@ export default function QuizPage() {
       <div className="space-y-8">
         {questions.map((q, index) => {
           const selected = selectedAnswers[q.id];
-          const isCorrect = selected === q.correct_answer;
+          const isCorrect = normalize(selected) === normalize(q.correct_answer);
 
           return (
             <div
@@ -67,7 +68,8 @@ export default function QuizPage() {
                 <div className="space-y-3">
                   {q.options.map((opt, i) => {
                     const isSelected = selected === opt;
-                    const isRightAnswer = q.correct_answer === opt;
+                    const isRightAnswer =
+                      normalize(q.correct_answer) === normalize(opt);
 
                     let style = "border hover:bg-gray-50";
 

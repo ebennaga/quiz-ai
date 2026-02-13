@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Sidebar from "@/components/ui/sidebar";
 import UploadQuizModal from "@/components/ui/upload-kuis-modal";
+import { supabase } from "@/lib/supabase/client";
 
 import { useRouter } from "next/navigation";
 
@@ -25,9 +26,18 @@ export default function DashboardShell({
       setUploading(true);
       setUploadDone(false);
       setError("");
+      // 🔥 Ambil user login
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        throw new Error("User belum login");
+      }
 
       const formData = new FormData();
       formData.append("file", file);
+      formData.append("userId", user.id);
 
       const res = await fetch("/api/quiz/upload", {
         method: "POST",
@@ -41,7 +51,7 @@ export default function DashboardShell({
       }
 
       setDocumentId(data.documentId);
-      setUploadDone(true); // 🔥 INI KUNCI
+      setUploadDone(true);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -70,8 +80,6 @@ export default function DashboardShell({
       if (!res.ok) {
         throw new Error(data.error || "Gagal generate quiz");
       }
-
-      console.log("Quiz generated:", data);
 
       // 👉 redirect / render quiz
       // router.push(`/quiz/${data.quizId}`);
@@ -109,22 +117,31 @@ export default function DashboardShell({
     }
   };
 
+  useEffect(() => {
+    const checkUserDocument = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) return;
+
+      const res = await fetch(`/api/quiz/check-upload?userId=${user.id}`);
+
+      const data = await res.json();
+
+      if (!data.hasDocument) {
+        setOpenUpload(true);
+      }
+    };
+
+    checkUserDocument();
+  }, []);
+
   return (
     <div className="flex min-h-screen">
       <Sidebar onOpenUploadModal={() => setOpenUpload(true)} />
 
       <main className="flex-1 p-6">{children}</main>
-      {/* {uploadDone && (
-        <div className="mt-4">
-          <button
-            onClick={handleGenerateQuiz}
-            disabled={generating}
-            className="rounded bg-orange-500 px-4 py-2 text-white"
-          >
-            {generating ? "Generating quiz..." : "Continue"}
-          </button>
-        </div>
-      )} */}
 
       <UploadQuizModal
         open={openUpload}
